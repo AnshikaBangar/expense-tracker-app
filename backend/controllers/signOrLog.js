@@ -1,3 +1,5 @@
+const encrypt = require("bcrypt");
+
 const signupdb = require("../models/signupdb");
 
 exports.signup = async (req, res) => {
@@ -5,17 +7,23 @@ exports.signup = async (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
-
-    const data = await signupdb.create({
-      name: name,
-      email: email,
-      password: password,
+    
+    encrypt.hash(password, 10, async (err, hash) => {
+      console.log(err);
+      const data = await signupdb.create({
+        name: name,
+        email: email,
+        password: hash,
+      });
+      res.json({ success: true, message: "Signed Up Successfully!" });
     });
-    res.json({ newData: data });
   } 
   catch (err) {
-    console.log("signup err");
-    res.json({ Error: err });
+    console.log(err);
+    res.json({
+      success: false,
+      message: "User already exist. Please signup or login with the existing email.",
+    });
   }
 };
 
@@ -23,25 +31,26 @@ exports.login = async (req, res) => {
   try {
     const email = req.body.email;
     const password = req.body.password;
-    const emaildb = await signupdb.findAll({ 
-      where: { email: email } 
-    });
-    const passworddb = await signupdb.findAll({
-      where: { password: password },
-    });
 
-    if (emaildb[0] === undefined) {
-      res.json({ message: "Email-id Not Found" });
-    } 
-    else if (passworddb[0] === undefined) {
-      res.json({ message: "Incorrect Password!" });
-    } 
-    else {
-      res.json({ success: "Loggged In Successfully" });
+    const emaildb = await signupdb.findAll({ where: { email: email } });
+
+    if (emaildb.length > 0) {
+      encrypt.compare(password, emaildb[0].password, (err, result) => {
+        if (err) {
+          throw new Error("Something went wrong!");
+        }
+        console.log(result);
+        if (result === true) {
+          res.json({ success: "Logged in Successfully!" });
+        } else {
+          res.json({ message: "Incorrect Password" });
+        }
+      });
+    } else {
+      res.json({ message: "User does not exist" });
     }
-  } 
-  catch (err) {
-    console.log("error in login BE");
+  } catch (err) {
+    console.log(err);
     res.json({ Error: err });
   }
 };
