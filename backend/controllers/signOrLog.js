@@ -1,4 +1,5 @@
 const encrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const signupdb = require("../models/signupdb");
 
@@ -7,7 +8,7 @@ exports.signup = async (req, res) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
-    
+
     encrypt.hash(password, 10, async (err, hash) => {
       console.log(err);
       const data = await signupdb.create({
@@ -17,15 +18,19 @@ exports.signup = async (req, res) => {
       });
       res.json({ success: true, message: "Signed Up Successfully!" });
     });
-  } 
-  catch (err) {
+  } catch (err) {
     console.log(err);
     res.json({
       success: false,
-      message: "User already exist. Please signup or login with the existing email.",
+      message:
+        "User already exist. Please signup or login with the existing email.",
     });
   }
 };
+
+function createToken(id) {
+  return jwt.sign({ userId: id }, "32204kahfkbkkcy9429hshksky2939hcsd");
+}
 
 exports.login = async (req, res) => {
   try {
@@ -54,3 +59,7 @@ exports.login = async (req, res) => {
     res.json({ Error: err });
   }
 };
+
+function createToken(id) {
+  return jwt.sign({ userId: id }, "32204kahfkbkkcy9429hshksky2939hcsd");
+}
