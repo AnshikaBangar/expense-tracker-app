@@ -10,6 +10,7 @@ exports.addExpense = async (req, res) => {
       amount: amount,
       description: description,
       category: category,
+      userId:expenseId
     });
     res.json({ newExpense: data });
   } catch (err) {
@@ -18,9 +19,14 @@ exports.addExpense = async (req, res) => {
   }
 };
 
+let expenseId;
+
 exports.getExpense = async (req, res) => {
+  expenseId = req.user.id;
   try {
-    const data = await expensedatabase.findAll();
+    const data = await expensedatabase.findAll({
+      where: { userId: expenseId },
+    });
     res.json({ allExpenses: data });
   } catch (err) {
     console.log(err);
@@ -30,8 +36,10 @@ exports.getExpense = async (req, res) => {
 
 exports.deleteExpense = async (req, res) => {
   try {
-    const expenseId = req.params.id;
-    const data = await expensedatabase.destroy({ where: { id: expenseId } });
+    const deleteExpenseId = req.params.id;
+    const data = await expensedatabase.destroy({
+      where: { id: deleteExpenseId },
+    });
   } catch (err) {
     console.log(err);
     res.json({ Error: err });
